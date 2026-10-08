@@ -1,16 +1,16 @@
-const CACHE_NAME = 'spx-siborong-v5-cache-v1';
+const CACHE_NAME = 'spx-siborong-v5-cache-v2';
 const ASSETS = [
-  './siborong_dashboard_ai.html',
+  './index.html',
   './manifest.webmanifest',
-  './pwa_icons/icon-72.png',
-  './pwa_icons/icon-96.png',
-  './pwa_icons/icon-128.png',
-  './pwa_icons/icon-144.png',
-  './pwa_icons/icon-152.png',
-  './pwa_icons/icon-192.png',
-  './pwa_icons/icon-384.png',
-  './pwa_icons/icon-512.png',
-  './pwa_icons/favicon.png'
+  './favicon.png',
+  './icon-72.png',
+  './icon-96.png',
+  './icon-128.png',
+  './icon-144.png',
+  './icon-152.png',
+  './icon-192.png',
+  './icon-384.png',
+  './icon-512.png'
 ];
 
 self.addEventListener('install', (event) => {
@@ -32,7 +32,6 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Network-first for HTML, cache-first for assets
   const url = new URL(event.request.url);
   if (event.request.mode === 'navigate' || url.pathname.endsWith('.html')) {
     event.respondWith(
@@ -42,7 +41,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           return res;
         })
-        .catch(() => caches.match(event.request).then((r) => r || caches.match('./siborong_dashboard_ai.html')))
+        .catch(() => caches.match(event.request).then((r) => r || caches.match('./index.html')))
     );
   } else {
     event.respondWith(
