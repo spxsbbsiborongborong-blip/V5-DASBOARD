@@ -210,7 +210,7 @@
     }
     .stats {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 0.75rem;
       padding: 1rem;
     }
@@ -236,7 +236,6 @@
     }
     .stat-upcoming .num { color: var(--primary); }
     .stat-loading .num { color: var(--warning); }
-    .stat-overdue .num { color: var(--danger); }
     .stat-done .num { color: var(--success); }
     .filters {
       display: flex;
@@ -310,7 +309,6 @@
     .status-upcoming { background: rgba(56,189,248,0.15); color: var(--primary); }
     .status-soon { background: rgba(245,158,11,0.2); color: var(--warning); }
     .status-loading { background: rgba(245,158,11,0.3); color: #fbbf24; animation: pulse 1.5s infinite; }
-    .status-overdue { background: rgba(239,68,68,0.2); color: var(--danger); }
     .status-done { background: rgba(34,197,94,0.15); color: var(--success); }
     @keyframes pulse {
       0%, 100% { opacity: 1; }
@@ -444,9 +442,6 @@
     .highlight-row {
       background: rgba(245, 158, 11, 0.12) !important;
     }
-    .highlight-overdue {
-      background: rgba(239, 68, 68, 0.12) !important;
-    }
   </style>
 </head>
 <body>
@@ -462,26 +457,26 @@
     </div>
     <div class="clock-box">
       <div class="time" id="clock">--:--:--</div>
-      <div class="date" id="dateStr">—</div>
+      <div class="date" id="dateStr">â€”</div>
     </div>
     <div class="controls">
       <button class="btn-ghost" id="btnVoice" onclick="toggleVoice()">
         <span class="voice-dot" id="voiceDot"></span>
         <span id="voiceLabel">Suara OFF</span>
       </button>
-      <button class="btn-warning" onclick="testVoice()">🔊 Test Suara</button>
-      <button class="btn-primary" onclick="speakSummary()">📢 Ringkasan</button>
-      <button class="btn-success" onclick="document.getElementById('csvUpload').click()">📂 Upload CSV</button>
-      <button class="btn-ghost" onclick="downloadCSV()" title="Download jadwal saat ini">⬇️ Download</button>
-      <button class="btn-ghost" onclick="showRestoreModal()" title="Restore dari backup">⏪ Restore</button>
+      <button class="btn-warning" onclick="testVoice()">ðŸ”Š Test Suara</button>
+      <button class="btn-primary" onclick="speakSummary()">ðŸ“¢ Ringkasan</button>
+      <button class="btn-success" onclick="document.getElementById('csvUpload').click()">ðŸ“‚ Upload CSV</button>
+      <button class="btn-ghost" onclick="downloadCSV()" title="Download jadwal saat ini">â¬‡ï¸ Download</button>
+      <button class="btn-ghost" onclick="showRestoreModal()" title="Restore dari backup">âª Restore</button>
       <select class="theme-select" id="themeSelect" onchange="setTheme(this.value)" title="Ganti tema">
-        <option value="dark">🌙 Gelap</option>
-        <option value="light">☀️ Terang</option>
-        <option value="ocean">🌊 Ocean</option>
-        <option value="forest">🌲 Forest</option>
-        <option value="sunset">🔥 Sunset</option>
+        <option value="dark">ðŸŒ™ Gelap</option>
+        <option value="light">â˜€ï¸ Terang</option>
+        <option value="ocean">ðŸŒŠ Ocean</option>
+        <option value="forest">ðŸŒ² Forest</option>
+        <option value="sunset">ðŸ”¥ Sunset</option>
       </select>
-      <button class="btn-primary" id="btnInstall" style="display:none;" onclick="installPWA()">📲 Install App</button>
+      <button class="btn-primary" id="btnInstall" style="display:none;" onclick="installPWA()">ðŸ“² Install App</button>
       <input type="file" id="csvUpload" accept=".csv,text/csv" style="display:none" onchange="handleCSVUpload(event)" />
     </div>
   </header>
@@ -490,8 +485,8 @@
     <div class="left">
       <div class="panel">
         <div class="panel-header">
-          <span>📋 Status Loading Hari Ini</span>
-          <span style="font-size:0.8rem;color:var(--muted)" id="lastUpdate">Update: —</span>
+          <span>ðŸ“‹ Status Loading Hari Ini</span>
+          <span style="font-size:0.8rem;color:var(--muted)" id="lastUpdate">Update: â€”</span>
         </div>
         <div class="stats">
           <div class="stat-card stat-upcoming">
@@ -502,10 +497,6 @@
             <div class="num" id="statLoading">0</div>
             <div class="label">Sedang Loading</div>
           </div>
-          <div class="stat-card stat-overdue">
-            <div class="num" id="statOverdue">0</div>
-            <div class="label">Terlambat</div>
-          </div>
           <div class="stat-card stat-done">
             <div class="num" id="statDone">0</div>
             <div class="label">Selesai</div>
@@ -513,9 +504,8 @@
         </div>
         <div class="filters">
           <button class="btn-ghost btn-active" data-filter="all" onclick="setFilter('all')">Semua</button>
-          <button class="btn-ghost" data-filter="soon" onclick="setFilter('soon')">≤30 menit</button>
+          <button class="btn-ghost" data-filter="soon" onclick="setFilter('soon')">â‰¤30 menit</button>
           <button class="btn-ghost" data-filter="loading" onclick="setFilter('loading')">Loading</button>
-          <button class="btn-ghost" data-filter="overdue" onclick="setFilter('overdue')">Terlambat</button>
           <button class="btn-ghost" data-filter="upcoming" onclick="setFilter('upcoming')">Akan Datang</button>
         </div>
         <div class="table-wrap">
@@ -540,19 +530,18 @@
     <div class="right">
       <div class="panel ai-panel">
         <div class="panel-header">
-          <span>🤖 Agen AI Siborong</span>
+          <span>ðŸ¤– Agen AI Siborong</span>
           <span style="font-size:0.75rem;color:var(--muted)">Online</span>
         </div>
         <div class="chat-messages" id="chatMessages">
           <div class="msg msg-ai">
             <div class="sender">Agen AI</div>
-            Halo! Saya Agen AI Dashboard Siborong-Borong. Saya bisa memberitahu status loading, rute yang akan segera berangkat, yang terlambat, dan memberikan ringkasan. Gunakan <b>Upload CSV</b> untuk ganti jadwal, <b>Download</b> untuk backup, dan <b>Restore</b> untuk kembali ke versi sebelumnya. Silakan tanya atau klik pertanyaan cepat di bawah.
+            Halo! Saya Agen AI Dashboard Siborong-Borong. Saya bisa memberitahu status loading, rute yang akan segera berangkat, dan memberikan ringkasan. Gunakan <b>Upload CSV</b> untuk ganti jadwal, <b>Download</b> untuk backup, dan <b>Restore</b> untuk kembali ke versi sebelumnya. Silakan tanya atau klik pertanyaan cepat di bawah.
           </div>
         </div>
         <div class="quick-qs">
           <button onclick="askAI('Rute mana yang loading sekarang?')">Loading sekarang?</button>
-          <button onclick="askAI('Apa yang akan loading dalam 30 menit?')">≤30 menit</button>
-          <button onclick="askAI('Ada yang terlambat?')">Yang terlambat?</button>
+          <button onclick="askAI('Apa yang akan loading dalam 30 menit?')">â‰¤30 menit</button>
           <button onclick="askAI('Ringkasan status hari ini')">Ringkasan</button>
           <button onclick="askAI('Rute ke Padang Sidempuan')">Padang Sidempuan</button>
         </div>
@@ -565,7 +554,7 @@
   </main>
 
   <footer>
-    SPX Siborong-Borong Dashboard V5 • PWA • Auto-save &amp; Backup • Waktu zona WIB<br>
+    SPX Siborong-Borong Dashboard V5 â€¢ PWA â€¢ Auto-save &amp; Backup â€¢ Waktu zona WIB<br>
     Format CSV: Route, Slot, Start Loading, ETD Origin &nbsp;|&nbsp; <strong>Powered by Amos rcp'86</strong>
   </footer>
 
@@ -573,8 +562,8 @@
   <div id="restoreModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:300;align-items:center;justify-content:center;">
     <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;max-width:480px;width:90%;max-height:80vh;overflow-y:auto;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-        <h3 style="font-size:1.1rem;">⏪ Restore dari Backup</h3>
-        <button class="btn-ghost" onclick="closeRestoreModal()" style="padding:0.3rem 0.6rem;">✕</button>
+        <h3 style="font-size:1.1rem;">âª Restore dari Backup</h3>
+        <button class="btn-ghost" onclick="closeRestoreModal()" style="padding:0.3rem 0.6rem;">âœ•</button>
       </div>
       <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem;">Pilih versi backup yang ingin dikembalikan (maks. 5 versi terakhir):</p>
       <div id="restoreList" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
@@ -696,7 +685,7 @@
     function downloadCSV() {
       if (!schedule.length) {
         addMsg('Tidak ada data jadwal untuk di-download.');
-        return;
+return;
       }
       let csv = 'Route,Slot,Start Loading,ETD Origin\n';
       schedule.forEach(item => {
@@ -712,7 +701,7 @@
       a.download = fname;
       a.click();
       URL.revokeObjectURL(url);
-      addMsg(`⬇️ File <b>${fname}</b> berhasil di-download (${schedule.length} rute).`);
+      addMsg(`â¬‡ï¸ File <b>${fname}</b> berhasil di-download (${schedule.length} rute).`);
       if (voiceEnabled) speak(`File jadwal berhasil di download. ${schedule.length} rute.`);
     }
 
@@ -728,7 +717,7 @@
           return `
             <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:0.75rem 1rem;display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">
               <div>
-                <div style="font-weight:600;font-size:0.9rem;">${h.label || 'Backup'} — ${h.count} rute</div>
+                <div style="font-weight:600;font-size:0.9rem;">${h.label || 'Backup'} â€” ${h.count} rute</div>
                 <div style="font-size:0.75rem;color:var(--muted);">${timeStr}</div>
               </div>
               <button class="btn-primary" style="padding:0.35rem 0.75rem;font-size:0.8rem;" onclick="restoreFromHistory(${i})">Restore</button>
@@ -758,9 +747,9 @@
       saveCurrentSchedule('Restore: ' + (item.label || 'Backup'));
       renderTable();
       closeRestoreModal();
-      const msg = `⏪ Berhasil restore jadwal: <b>${item.label || 'Backup'}</b> (${item.count} rute).`;
+      const msg = `âª Berhasil restore jadwal: <b>${item.label || 'Backup'}</b> (${item.count} rute).`;
       addMsg(msg);
-      showBanner(`⏪ Restore berhasil — ${item.count} rute`);
+      showBanner(`âª Restore berhasil â€” ${item.count} rute`);
       if (voiceEnabled) speak(`Jadwal berhasil di-restore. ${item.count} rute.`);
     }
 
@@ -798,38 +787,34 @@
       const diffStart = start - now;
       const diffEtd = etd - now;
 
-      if (now > etd + 30) return { key: 'done', label: 'Selesai', cls: 'status-done' };
+      if (now > etd) return { key: 'done', label: 'Selesai', cls: 'status-done' };
       if (now >= start && now <= etd) return { key: 'loading', label: 'LOADING', cls: 'status-loading' };
-      if (now > etd) return { key: 'overdue', label: 'TERLAMBAT', cls: 'status-overdue' };
-      if (diffStart <= 30 && diffStart > 0) return { key: 'soon', label: '≤30 menit', cls: 'status-soon' };
+      if (diffStart <= 30 && diffStart > 0) return { key: 'soon', label: 'â‰¤30 menit', cls: 'status-soon' };
       return { key: 'upcoming', label: 'Akan Datang', cls: 'status-upcoming' };
     }
 
     // ========== RENDER ==========
     function renderTable() {
       const tbody = document.getElementById('tableBody');
-      let upcoming = 0, loading = 0, overdue = 0, done = 0;
+      let upcoming = 0, loading = 0, done = 0;
       const rows = [];
 
       schedule.forEach((item, idx) => {
         const status = getStatus(item);
         if (status.key === 'upcoming' || status.key === 'soon') upcoming++;
         if (status.key === 'loading') loading++;
-        if (status.key === 'overdue') overdue++;
         if (status.key === 'done') done++;
 
         if (currentFilter !== 'all') {
           if (currentFilter === 'soon' && status.key !== 'soon') return;
           if (currentFilter === 'loading' && status.key !== 'loading') return;
-          if (currentFilter === 'overdue' && status.key !== 'overdue') return;
           if (currentFilter === 'upcoming' && status.key !== 'upcoming' && status.key !== 'soon') return;
         }
 
         const now = nowMinutes();
         const startMin = parseTime(item.start);
         const diff = startMin - now;
-        const rowClass = status.key === 'loading' || status.key === 'soon' ? 'highlight-row' :
-                         status.key === 'overdue' ? 'highlight-overdue' : '';
+        const rowClass = status.key === 'loading' || status.key === 'soon' ? 'highlight-row' : '';
 
         rows.push(`
           <tr class="${rowClass}">
@@ -848,7 +833,6 @@
 
       document.getElementById('statUpcoming').textContent = upcoming;
       document.getElementById('statLoading').textContent = loading;
-      document.getElementById('statOverdue').textContent = overdue;
       document.getElementById('statDone').textContent = done;
       document.getElementById('lastUpdate').textContent = 'Update: ' + getNowDate().toLocaleTimeString('id-ID');
     }
@@ -953,7 +937,6 @@
         const etd = parseTime(item.etd);
         const key30 = `30-${idx}`;
         const keyStart = `start-${idx}`;
-        const keyOver = `over-${idx}`;
 
         // 30 menit sebelum
         if (start - now === 30 && !alertedKeys.has(key30)) {
@@ -970,32 +953,22 @@
           showBanner(msg);
           speak(msg);
         }
-
-        // Overdue (lewat ETD)
-        if (now === etd + 1 && !alertedKeys.has(keyOver)) {
-          alertedKeys.add(keyOver);
-          const msg = `Peringatan terlambat. Rute ${item.route}, slot ${item.slot}, sudah melewati ETD pukul ${item.etd}.`;
-          showBanner(msg);
-          speak(msg);
-        }
       });
     }
 
     function showBanner(text) {
       const banner = document.getElementById('alarmBanner');
-      banner.textContent = '🔔 ' + text;
+      banner.textContent = 'ðŸ”” ' + text;
       banner.classList.add('show');
       setTimeout(() => banner.classList.remove('show'), 12000);
     }
 
     function speakSummary() {
-      const now = nowMinutes();
-      let loadingList = [], soonList = [], overdueList = [];
+      let loadingList = [], soonList = [];
       schedule.forEach(item => {
         const s = getStatus(item);
         if (s.key === 'loading') loadingList.push(item);
         if (s.key === 'soon') soonList.push(item);
-        if (s.key === 'overdue') overdueList.push(item);
       });
 
       let text = 'Ringkasan status loading Siborong Borong. ';
@@ -1007,9 +980,6 @@
       if (soonList.length) {
         text += `Akan loading dalam 30 menit ada ${soonList.length} rute. `;
       }
-      if (overdueList.length) {
-        text += `Perhatian, ada ${overdueList.length} rute yang terlambat. `;
-      } else text += 'Tidak ada yang terlambat. ';
 
       speak(text, true);
     }
@@ -1050,17 +1020,17 @@
       const now = nowMinutes();
       const loading = schedule.filter(i => getStatus(i).key === 'loading');
       const soon = schedule.filter(i => getStatus(i).key === 'soon');
-      const overdue = schedule.filter(i => getStatus(i).key === 'overdue');
       const upcoming = schedule.filter(i => {
         const s = getStatus(i).key;
         return s === 'upcoming' || s === 'soon';
       });
+      const done = schedule.filter(i => getStatus(i).key === 'done');
 
       // Intent matching
       if (q.includes('loading sekarang') || q.includes('sedang loading') || q.includes('loading sekarang?')) {
         if (!loading.length) return 'Saat ini tidak ada rute yang sedang dalam proses loading.';
         let res = `Sedang loading ada <b>${loading.length}</b> rute:<br>`;
-        loading.forEach(i => res += `• ${i.route} (Slot ${i.slot}) — Start ${i.start}, ETD ${i.etd}<br>`);
+        loading.forEach(i => res += `â€¢ ${i.route} (Slot ${i.slot}) â€” Start ${i.start}, ETD ${i.etd}<br>`);
         return res;
       }
 
@@ -1069,24 +1039,16 @@
         let res = `Dalam 30 menit akan mulai loading <b>${soon.length}</b> rute:<br>`;
         soon.forEach(i => {
           const diff = parseTime(i.start) - now;
-          res += `• ${i.route} (Slot ${i.slot}) — ${i.start} (dalam ${diff} menit)<br>`;
+          res += `â€¢ ${i.route} (Slot ${i.slot}) â€” ${i.start} (dalam ${diff} menit)<br>`;
         });
         return res;
       }
 
-      if (q.includes('terlambat') || q.includes('overdue') || q.includes('telat')) {
-        if (!overdue.length) return 'Bagus! Saat ini tidak ada rute yang terlambat.';
-        let res = `⚠️ Ada <b>${overdue.length}</b> rute yang terlambat (melewati ETD):<br>`;
-        overdue.forEach(i => res += `• ${i.route} (Slot ${i.slot}) — ETD ${i.etd}<br>`);
-        return res;
-      }
-
       if (q.includes('ringkasan') || q.includes('status hari ini') || q.includes('status')) {
-        return `📊 <b>Ringkasan Status</b><br>
-        • Akan datang / ≤30 menit: <b>${upcoming.length}</b><br>
-        • Sedang loading: <b>${loading.length}</b><br>
-        • Terlambat: <b>${overdue.length}</b><br>
-        • Sudah lewat (selesai): <b>${schedule.length - upcoming.length - loading.length - overdue.length}</b><br><br>
+        return `ðŸ“Š <b>Ringkasan Status</b><br>
+        â€¢ Akan datang / â‰¤30 menit: <b>${upcoming.length}</b><br>
+        â€¢ Sedang loading: <b>${loading.length}</b><br>
+        â€¢ Selesai: <b>${done.length}</b><br><br>
         Total rute hari ini: ${schedule.length}`;
       }
 
@@ -1096,7 +1058,7 @@
         let res = `Ditemukan <b>${matches.length}</b> rute terkait Padang Sidempuan:<br>`;
         matches.forEach(i => {
           const s = getStatus(i);
-          res += `• Slot ${i.slot} | ${i.start}–${i.etd} | <b>${s.label}</b><br>`;
+          res += `â€¢ Slot ${i.slot} | ${i.start}â€“${i.etd} | <b>${s.label}</b><br>`;
         });
         return res;
       }
@@ -1106,7 +1068,7 @@
         let res = `Rute Saipar Dolok / Panyabungan:<br>`;
         matches.forEach(i => {
           const s = getStatus(i);
-          res += `• Slot ${i.slot} | ${i.start}–${i.etd} | ${s.label}<br>`;
+          res += `â€¢ Slot ${i.slot} | ${i.start}â€“${i.etd} | ${s.label}<br>`;
         });
         return res;
       }
@@ -1116,7 +1078,7 @@
         let res = `Rute Beringin / Pandan / Sibabangun:<br>`;
         matches.forEach(i => {
           const s = getStatus(i);
-          res += `• Slot ${i.slot} | ${i.start}–${i.etd} | ${s.label}<br>`;
+          res += `â€¢ Slot ${i.slot} | ${i.start}â€“${i.etd} | ${s.label}<br>`;
         });
         return res;
       }
@@ -1136,12 +1098,11 @@
 
       // Default help
       return `Saya bisa membantu dengan pertanyaan seperti:<br>
-      • "Rute mana yang loading sekarang?"<br>
-      • "Apa yang akan loading dalam 30 menit?"<br>
-      • "Ada yang terlambat?"<br>
-      • "Ringkasan status hari ini"<br>
-      • "Rute ke Padang Sidempuan"<br>
-      • Nama hub tertentu (Saipar, Beringin, dll)<br><br>
+      â€¢ "Rute mana yang loading sekarang?"<br>
+      â€¢ "Apa yang akan loading dalam 30 menit?"<br>
+      â€¢ "Ringkasan status hari ini"<br>
+      â€¢ "Rute ke Padang Sidempuan"<br>
+      â€¢ Nama hub tertentu (Saipar, Beringin, dll)<br><br>
       Silakan tanya lebih spesifik!`;
     }
 
@@ -1151,7 +1112,7 @@
       if (!file) return;
 
       if (!file.name.toLowerCase().endsWith('.csv') && file.type !== 'text/csv') {
-        addMsg('⚠️ File harus berformat CSV.', false);
+        addMsg('âš ï¸ File harus berformat CSV.', false);
         return;
       }
 
@@ -1161,7 +1122,7 @@
           const text = e.target.result;
           const parsed = parseCSV(text);
           if (!parsed.length) {
-            addMsg('⚠️ CSV kosong atau format tidak dikenali. Pastikan ada kolom Route, Slot, Start Loading, ETD Origin.', false);
+            addMsg('âš ï¸ CSV kosong atau format tidak dikenali. Pastikan ada kolom Route, Slot, Start Loading, ETD Origin.', false);
             speak('Upload gagal. Format CSV tidak dikenali.', true);
             return;
           }
@@ -1178,18 +1139,18 @@
           saveCurrentSchedule('Upload: ' + file.name);
           renderTable();
 
-          const msg = `✅ Jadwal berhasil diganti! ${parsed.length} rute dimuat dari file "${file.name}". Versi lama sudah di-backup.`;
+          const msg = `âœ… Jadwal berhasil diganti! ${parsed.length} rute dimuat dari file "${file.name}". Versi lama sudah di-backup.`;
           addMsg(msg);
-          showBanner(`📂 ${parsed.length} jadwal baru berhasil di-upload`);
+          showBanner(`ðŸ“‚ ${parsed.length} jadwal baru berhasil di-upload`);
           if (voiceEnabled) speak(`Jadwal berhasil diganti. ${parsed.length} rute dimuat. Versi lama sudah di backup.`);
         } catch (err) {
           console.error(err);
-          addMsg('⚠️ Gagal membaca CSV: ' + err.message, false);
+          addMsg('âš ï¸ Gagal membaca CSV: ' + err.message, false);
           speak('Gagal membaca file CSV.', true);
         }
       };
       reader.onerror = function() {
-        addMsg('⚠️ Gagal membaca file.', false);
+        addMsg('âš ï¸ Gagal membaca file.', false);
       };
       reader.readAsText(file, 'UTF-8');
 
@@ -1342,7 +1303,7 @@
       deferredInstallPrompt.prompt();
       deferredInstallPrompt.userChoice.then((result) => {
         if (result.outcome === 'accepted') {
-          addMsg('✅ Aplikasi berhasil diinstall!');
+          addMsg('âœ… Aplikasi berhasil diinstall!');
           if (voiceEnabled) speak('Aplikasi berhasil diinstall.');
         }
         deferredInstallPrompt = null;
@@ -1355,7 +1316,7 @@
       deferredInstallPrompt = null;
       const btn = document.getElementById('btnInstall');
       if (btn) btn.style.display = 'none';
-      addMsg('✅ SPX Siborong-Borong Dashboard V5 berhasil diinstall sebagai aplikasi.');
+      addMsg('âœ… SPX Siborong-Borong Dashboard V5 berhasil diinstall sebagai aplikasi.');
     });
 
     // Register Service Worker
