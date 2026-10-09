@@ -85,17 +85,18 @@
         <div class="chat-messages" id="chatMessages">
           <div class="msg msg-ai">
             <div class="sender">Agen AI</div>
-            Halo! Saya Agen AI Dashboard Siborong-Borong. Tanya status loading, ringkasan, atau upload CSV untuk ganti jadwal.
+            Halo! Saya Agen AI Dashboard V5. Tanya rute, slot, pukul loading, atau wilayah tujuan. Contoh: "Pukul berapa loading Beringin?" atau "Berapa slot Padang Sidempuan?"
           </div>
         </div>
         <div class="quick-qs">
-          <button onclick="askAI('Rute mana yang loading sekarang?')">Loading sekarang?</button>
-          <button onclick="askAI('Apa yang akan loading dalam 30 menit?')"><=30 menit</button>
+          <button onclick="askAI('Loading sekarang?')">Loading sekarang?</button>
           <button onclick="askAI('Ringkasan status hari ini')">Ringkasan</button>
-          <button onclick="askAI('Rute ke Padang Sidempuan')">Padang Sidempuan</button>
+          <button onclick="askAI('Pukul berapa loading Padang Sidempuan?')">Padang Sidempuan</button>
+          <button onclick="askAI('Berapa slot arah Beringin?')">Slot Beringin</button>
+          <button onclick="askAI('Kapan Tarutung mulai loading?')">Tarutung</button>
         </div>
         <div class="chat-input-area">
-          <input type="text" id="chatInput" placeholder="Tanya agen AI..." onkeydown="if(event.key==='Enter')sendChat()" />
+          <input type="text" id="chatInput" placeholder="Contoh: pukul berapa loading Saipar?" onkeydown="if(event.key==='Enter')sendChat()" />
           <button class="btn-primary" onclick="sendChat()">Kirim</button>
         </div>
       </div>
