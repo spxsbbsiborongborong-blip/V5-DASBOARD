@@ -1,6 +1,9 @@
-const CACHE_NAME = 'spx-siborong-v5-cache-v2';
+const CACHE_NAME = 'spx-siborong-v5-cache-v3';
 const ASSETS = [
   './index.html',
+  './styles.css',
+  './data.js',
+  './app.js',
   './manifest.webmanifest',
   './favicon.png',
   './icon-72.png',
