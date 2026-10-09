@@ -8,31 +8,40 @@ function processAI(q) {
   });
   var done = schedule.filter(function(i) { return getStatus(i).key === 'done'; });
 
-  if (q.includes('loading sekarang') || q.includes('sedang loading') || q.includes('apa yang loading')) {
-    if (!loading.length) return 'Saat ini tidak ada rute yang sedang loading.';
-    var res = 'Sedang loading ada <b>' + loading.length + '</b> rute:<br>';
-    loading.forEach(function(i) {
-      res += '- ' + i.route + ' | Slot <b>' + i.slot + '</b> | Start ' + i.start + ' - ETD ' + i.etd + '<br>';
-    });
-    return res;
+  function fmtItem(i, idx) {
+    var st = getStatus(i);
+    var diff = parseTime(i.start) - now;
+    var cd = formatCountdown(diff);
+    var n = (idx !== undefined) ? (idx + 1) + '. ' : '';
+    return n + '<b>' + i.route + '</b><br>' +
+      '&nbsp;&nbsp;Slot: <b>' + i.slot + '</b> &nbsp;|&nbsp; Start: <b>' + i.start + '</b> &nbsp;|&nbsp; ETD: <b>' + i.etd + '</b><br>' +
+      '&nbsp;&nbsp;Status: <b>' + st.label + '</b> (' + cd + ')<br>';
   }
 
-  if (q.includes('30 menit') || q.includes('segera') || (q.includes('akan loading') && !q.includes('pukul'))) {
+  function fmtList(arr, title) {
+    if (!arr.length) return title + '<br>Tidak ada data.';
+    var r = title + '<br><br>';
+    arr.forEach(function(i, idx) { r += fmtItem(i, idx) + '<br>'; });
+    return r;
+  }
+
+  if (q.includes('loading sekarang') || q.includes('sedang loading') || q.includes('apa yang loading') || q === 'loading sekarang?') {
+    if (!loading.length) return 'Saat ini <b>tidak ada</b> rute yang sedang loading.';
+    return fmtList(loading, 'Sedang loading: <b>' + loading.length + '</b> rute');
+  }
+
+  if (q.includes('30 menit') || q.includes('segera') || (q.includes('akan loading') && q.indexOf('pukul') === -1 && q.indexOf('jam') === -1)) {
     if (!soon.length) return 'Tidak ada rute yang akan loading dalam 30 menit ke depan.';
-    var res2 = 'Dalam 30 menit akan loading <b>' + soon.length + '</b> rute:<br>';
-    soon.forEach(function(i) {
-      var diff = parseTime(i.start) - now;
-      res2 += '- ' + i.route + ' | Slot <b>' + i.slot + '</b> | pukul ' + i.start + ' (dalam ' + diff + ' menit)<br>';
-    });
-    return res2;
+    return fmtList(soon, 'Akan loading dalam 30 menit: <b>' + soon.length + '</b> rute');
   }
 
   if (q.includes('ringkasan') || q.includes('status hari ini') || q === 'status') {
-    return '<b>Ringkasan Status Dashboard V5</b><br>' +
-      '- Akan datang / <=30 menit: <b>' + upcoming.length + '</b><br>' +
-      '- Sedang loading: <b>' + loading.length + '</b><br>' +
-      '- Selesai: <b>' + done.length + '</b><br>' +
-      '- Total rute hari ini: <b>' + schedule.length + '</b>';
+    return '<b>RINGKASAN DASHBOARD V5</b><br><br>' +
+      'Akan datang / <=30 menit : <b>' + upcoming.length + '</b><br>' +
+      'Sedang loading          : <b>' + loading.length + '</b><br>' +
+      'Selesai                 : <b>' + done.length + '</b><br>' +
+      'Total rute hari ini     : <b>' + schedule.length + '</b><br><br>' +
+      'Waktu sekarang: <b>' + getNowDate().toLocaleTimeString('id-ID', { hour12: false }) + ' WIB</b>';
   }
 
   if (q.includes('jam berapa') || q.includes('waktu sekarang') || q.includes('sekarang jam') || q.includes('pukul berapa sekarang')) {
@@ -44,12 +53,21 @@ function processAI(q) {
   }
 
   if (q.includes('halo') || q.includes('hai') || q.includes('hello') || q.includes('pagi') || q.includes('siang') || q.includes('malam')) {
-    return 'Halo! Saya Agen AI Dashboard V5 Siborong-Borong. Tanya saja tentang rute, slot, jam loading, atau wilayah tujuan.';
+    return 'Halo! Saya Agen AI Dashboard V5 Siborong-Borong.<br><br>Anda bisa tanya:<br>' +
+      '- Pukul berapa loading ke [wilayah]?<br>' +
+      '- Berapa slot arah [wilayah]?<br>' +
+      '- Loading sekarang? / Ringkasan<br>' +
+      '- Nama hub: Beringin, Saipar, Tarutung, Balige, dll';
   }
 
-  var stopwords = ['pukul','berapa','jam','arah','tujuan','wilayah','loading','di','ke','yang','ada','untuk','dari','slot','rute','kapan','mulai','etd','start','jadwal','dengan','apa','siapa','mana','saya','ingin','tolong','cek','lihat','info','informasi','tentang','seputar','dashboard','v5'];
+  var stopwords = {
+    'pukul':1,'berapa':1,'jam':1,'arah':1,'tujuan':1,'wilayah':1,'loading':1,'di':1,'ke':1,'yang':1,
+    'ada':1,'untuk':1,'dari':1,'slot':1,'rute':1,'kapan':1,'mulai':1,'etd':1,'start':1,'jadwal':1,
+    'dengan':1,'apa':1,'siapa':1,'mana':1,'saya':1,'ingin':1,'tolong':1,'cek':1,'lihat':1,
+    'info':1,'informasi':1,'tentang':1,'seputar':1,'dashboard':1,'v5':1,'hub':1,'the':1,'dan':1
+  };
   var words = q.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(function(w) {
-    return w.length >= 3 && stopwords.indexOf(w) === -1;
+    return w.length >= 3 && !stopwords[w];
   });
 
   var matches = [];
@@ -60,55 +78,58 @@ function processAI(q) {
     });
   }
 
+  matches.sort(function(a, b) { return parseTime(a.start) - parseTime(b.start); });
+
   if (matches.length > 0) {
-    if (q.includes('slot') || q.includes('berapa slot')) {
-      var slots = matches.map(function(i) { return i.slot; });
-      var uniqueSlots = slots.filter(function(v, i, a) { return a.indexOf(v) === i; });
-      var resS = 'Ditemukan <b>' + matches.length + '</b> jadwal terkait:<br>';
+    var askSlot = q.includes('slot') || q.includes('berapa slot');
+    var askTime = q.includes('pukul') || q.includes('jam') || q.includes('kapan') || q.includes('waktu') || q.includes('mulai') || q.includes('etd') || q.includes('start');
+    var keyword = words.join(', ');
+
+    var head = '';
+    if (askSlot) {
+      var slots = [];
       matches.forEach(function(i) {
-        var st = getStatus(i);
-        resS += '- Slot <b>' + i.slot + '</b> | ' + i.route + '<br>&nbsp;&nbsp;Start <b>' + i.start + '</b> - ETD <b>' + i.etd + '</b> | ' + st.label + '<br>';
+        if (slots.indexOf(i.slot) === -1) slots.push(i.slot);
       });
-      resS += '<br>Slot yang dipakai: <b>' + uniqueSlots.join(', ') + '</b>';
-      return resS;
+      head = 'Untuk wilayah <b>' + keyword + '</b> ditemukan <b>' + matches.length + '</b> jadwal.<br>' +
+        'Slot yang dipakai: <b>' + slots.join(', ') + '</b><br><br>';
+    } else if (askTime) {
+      head = 'Jadwal loading wilayah <b>' + keyword + '</b> (' + matches.length + ' rute):<br><br>';
+    } else {
+      head = 'Ditemukan <b>' + matches.length + '</b> jadwal untuk <b>' + keyword + '</b>:<br><br>';
     }
 
-    if (q.includes('pukul') || q.includes('jam') || q.includes('kapan') || q.includes('waktu') || q.includes('mulai') || q.includes('etd')) {
-      var resT = 'Jadwal loading terkait:<br>';
-      matches.forEach(function(i) {
-        var st = getStatus(i);
-        var diff = parseTime(i.start) - now;
-        var cd = formatCountdown(diff);
-        resT += '- <b>' + i.route + '</b><br>&nbsp;&nbsp;Slot <b>' + i.slot + '</b> | Start <b>' + i.start + '</b> | ETD <b>' + i.etd + '</b> | ' + st.label + ' (' + cd + ')<br>';
-      });
-      return resT;
-    }
-
-    var resM = 'Ditemukan <b>' + matches.length + '</b> jadwal:<br>';
-    matches.forEach(function(i) {
-      var st = getStatus(i);
-      resM += '- <b>' + i.route + '</b><br>&nbsp;&nbsp;Slot <b>' + i.slot + '</b> | Start <b>' + i.start + '</b> - ETD <b>' + i.etd + '</b> | ' + st.label + '<br>';
+    var body = '';
+    matches.forEach(function(i, idx) {
+      body += fmtItem(i, idx) + '<br>';
     });
-    return resM;
+
+    var allSlots = [];
+    matches.forEach(function(i) {
+      if (allSlots.indexOf(i.slot) === -1) allSlots.push(i.slot);
+    });
+    var foot = '---<br>Total: <b>' + matches.length + '</b> jadwal | Slot: <b>' + allSlots.join(', ') + '</b>';
+
+    return head + body + foot;
   }
 
   if (q.includes('daftar') || q.includes('semua rute') || q.includes('semua hub') || q.includes('list')) {
-    var resL = 'Daftar ' + schedule.length + ' jadwal hari ini:<br>';
+    var resL = 'Daftar ' + schedule.length + ' jadwal hari ini (15 pertama):<br><br>';
     schedule.slice(0, 15).forEach(function(i, idx) {
-      resL += (idx+1) + '. Slot ' + i.slot + ' | ' + i.start + ' | ' + i.route.substring(0, 50) + (i.route.length > 50 ? '...' : '') + '<br>';
+      resL += (idx + 1) + '. Slot ' + i.slot + ' | ' + i.start + ' | ' + i.route.substring(0, 55) + (i.route.length > 55 ? '...' : '') + '<br>';
     });
-    if (schedule.length > 15) resL += '... dan ' + (schedule.length - 15) + ' rute lainnya.';
+    if (schedule.length > 15) resL += '<br>... dan ' + (schedule.length - 15) + ' rute lainnya. Ketik nama wilayah untuk detail.';
     return resL;
   }
 
-  return 'Saya bisa menjawab pertanyaan seputar Dashboard V5, contoh:<br>' +
-    '- "Pukul berapa loading ke Padang Sidempuan?"<br>' +
-    '- "Berapa slot arah Beringin?"<br>' +
-    '- "Rute Saipar slot berapa?"<br>' +
-    '- "Loading sekarang?" / "Ringkasan"<br>' +
-    '- "Kapan Tarutung mulai loading?"<br>' +
-    '- Nama hub/wilayah (Sipirok, Balige, Natal, dll)<br><br>' +
-    'Silakan tanya lebih spesifik!';
+  return 'Maaf, saya belum menemukan rute yang cocok.<br><br>' +
+    '<b>Coba tanya seperti ini:</b><br>' +
+    '1. "Pukul berapa loading Beringin?"<br>' +
+    '2. "Berapa slot arah Padang Sidempuan?"<br>' +
+    '3. "Kapan Tarutung mulai loading?"<br>' +
+    '4. "Saipar" / "Balige" / "Natal" / "Sorkam"<br>' +
+    '5. "Loading sekarang?" / "Ringkasan"<br><br>' +
+    'Ketik nama hub atau wilayah tujuan saja, saya akan tampilkan detailnya.';
 }
 
 function handleCSVUpload(event) {
