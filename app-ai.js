@@ -252,6 +252,7 @@ if (window.speechSynthesis) {
 
 loadVoicePref();
 loadTheme();
+if (typeof updateNotifBtn === 'function') updateNotifBtn();
 var loaded = loadFromLocalStorage();
 if (!loaded) saveCurrentSchedule('Jadwal awal');
 tick();
