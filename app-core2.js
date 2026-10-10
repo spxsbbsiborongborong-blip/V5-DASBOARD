@@ -5,6 +5,73 @@ function setFilter(f) {
   });
   renderTable();
 }
+function setSearch(val) {
+  searchQuery = (val || '').trim().toLowerCase();
+  renderTable();
+}
+function clearSearch() {
+  searchQuery = '';
+  var inp = document.getElementById('searchRoute');
+  if (inp) inp.value = '';
+  renderTable();
+}
+function requestNotifPermission() {
+  if (!('Notification' in window)) {
+    addMsg('Browser tidak mendukung notifikasi.');
+    return;
+  }
+  if (Notification.permission === 'granted') {
+    addMsg('[OK] Notifikasi browser sudah aktif.');
+    updateNotifBtn();
+    return;
+  }
+  if (Notification.permission === 'denied') {
+    addMsg('Notifikasi diblokir. Aktifkan di pengaturan browser.');
+    return;
+  }
+  Notification.requestPermission().then(function(p) {
+    if (p === 'granted') {
+      addMsg('[OK] Notifikasi browser diaktifkan. Anda akan menerima alarm <=30 menit dan mulai loading.');
+      sendBrowserNotif('SPX Dashboard V5', 'Notifikasi aktif. Alarm loading siap.');
+    } else {
+      addMsg('Izin notifikasi ditolak.');
+    }
+    updateNotifBtn();
+  });
+}
+function updateNotifBtn() {
+  var btn = document.getElementById('btnNotif');
+  if (!btn) return;
+  if (!('Notification' in window)) {
+    btn.textContent = 'Notif N/A';
+    return;
+  }
+  if (Notification.permission === 'granted') {
+    btn.textContent = 'Notif ON';
+    btn.classList.add('btn-success');
+    btn.classList.remove('btn-ghost');
+  } else {
+    btn.textContent = 'Aktifkan Notif';
+    btn.classList.remove('btn-success');
+  }
+}
+function sendBrowserNotif(title, body) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    var n = new Notification(title, {
+      body: body,
+      icon: 'icon-192.png',
+      badge: 'icon-72.png',
+      tag: 'spx-alarm-' + Date.now(),
+      requireInteraction: true
+    });
+    n.onclick = function() {
+      window.focus();
+      n.close();
+    };
+    setTimeout(function() { try { n.close(); } catch(e) {} }, 20000);
+  } catch (e) {}
+}
 function updateClock() {
   var now = getNowDate();
   document.getElementById('clock').textContent = now.toLocaleTimeString('id-ID', { hour12: false });
@@ -13,39 +80,36 @@ function updateClock() {
 function speak(text, force) {
   if (!voiceEnabled && !force) return;
   if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  var utter = new SpeechSynthesisUtterance(text);
-  utter.lang = 'id-ID';
-  utter.rate = 0.95;
+  speechSynthesis.cancel();
+  var u = new SpeechSynthesisUtterance(text.replace(/<[^>]+>/g, ' '));
+  u.lang = 'id-ID';
+  u.rate = 0.95;
   var voices = speechSynthesis.getVoices();
   var idVoice = voices.find(function(v) { return v.lang.indexOf('id') === 0; });
-  if (idVoice) utter.voice = idVoice;
-  speechSynthesis.speak(utter);
+  if (idVoice) u.voice = idVoice;
+  speechSynthesis.speak(u);
 }
 function toggleVoice() {
   voiceEnabled = !voiceEnabled;
-  localStorage.setItem('siborong_voice_on', voiceEnabled ? '1' : '0');
-  applyVoiceUI();
-  if (voiceEnabled) speak('Alarm suara diaktifkan.', true);
-}
-function applyVoiceUI() {
-  var dot = document.getElementById('voiceDot');
+  localStorage.setItem('voiceEnabled', voiceEnabled ? 'true' : 'false');
   var label = document.getElementById('voiceLabel');
-  if (dot) dot.classList.toggle('on', voiceEnabled);
+  var dot = document.getElementById('voiceDot');
   if (label) label.textContent = voiceEnabled ? 'Suara ON' : 'Suara OFF';
+  if (dot) dot.classList.toggle('on', voiceEnabled);
+  if (voiceEnabled) speak('Suara alarm diaktifkan.', true);
 }
 function loadVoicePref() {
-  voiceEnabled = localStorage.getItem('siborong_voice_on') === '1';
-  applyVoiceUI();
+  voiceEnabled = localStorage.getItem('voiceEnabled') === 'true';
+  var label = document.getElementById('voiceLabel');
+  var dot = document.getElementById('voiceDot');
+  if (label) label.textContent = voiceEnabled ? 'Suara ON' : 'Suara OFF';
+  if (dot) dot.classList.toggle('on', voiceEnabled);
 }
-var THEME_KEY = 'siborong_theme';
-var THEME_COLORS = { dark: '#0f172a', light: '#f1f5f9', ocean: '#0c4a6e', forest: '#14532d', sunset: '#431407' };
-function setTheme(name) {
-  var theme = THEME_COLORS[name] ? name : 'dark';
+var THEME_KEY = 'siborong_theme_v1';
+function setTheme(theme) {
+  theme = theme || 'dark';
   document.documentElement.setAttribute('data-theme', theme);
   localStorage.setItem(THEME_KEY, theme);
-  var meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', THEME_COLORS[theme] || '#0f172a');
   var sel = document.getElementById('themeSelect');
   if (sel) sel.value = theme;
 }
@@ -56,23 +120,27 @@ function testVoice() {
   speak('Ini adalah tes suara alarm. Sistem dashboard Siborong Borong siap digunakan.', true);
 }
 function checkAlarms() {
-  if (!voiceEnabled) return;
   var now = nowMinutes();
+  var notifOn = ('Notification' in window) && Notification.permission === 'granted';
   schedule.forEach(function(item, idx) {
     var start = parseTime(item.start);
-    var key30 = '30-' + idx;
-    var keyStart = 'start-' + idx;
-    if (start - now === 30 && !alertedKeys.has(key30)) {
+    var etd = parseTime(item.etd);
+    var diffStart = start - now;
+    var key30 = '30-' + idx + '-' + item.start;
+    var keyStart = 'start-' + idx + '-' + item.start;
+    if (diffStart <= 30 && diffStart > 0 && !alertedKeys.has(key30)) {
       alertedKeys.add(key30);
-      var msg = 'Perhatian. Rute ' + item.route + ', slot ' + item.slot + ', akan mulai loading dalam 30 menit, pukul ' + item.start + '.';
+      var msg = 'Perhatian. Rute ' + item.route + ', slot ' + item.slot + ', akan mulai loading dalam ' + diffStart + ' menit, pukul ' + item.start + '.';
       showBanner(msg);
-      speak(msg);
+      if (voiceEnabled) speak(msg);
+      if (notifOn) sendBrowserNotif('<=30 menit | Slot ' + item.slot, item.route + ' mulai pukul ' + item.start + ' (dalam ' + diffStart + ' menit)');
     }
-    if (now === start && !alertedKeys.has(keyStart)) {
+    if (now >= start && now <= etd && !alertedKeys.has(keyStart)) {
       alertedKeys.add(keyStart);
       var msg2 = 'Alarm loading. Rute ' + item.route + ', slot ' + item.slot + ', mulai loading sekarang pukul ' + item.start + '.';
       showBanner(msg2);
-      speak(msg2);
+      if (voiceEnabled) speak(msg2);
+      if (notifOn) sendBrowserNotif('LOADING | Slot ' + item.slot, item.route + ' mulai loading pukul ' + item.start);
     }
   });
 }
