@@ -1,5 +1,6 @@
 var voiceEnabled = false;
 var currentFilter = 'all';
+var searchQuery = '';
 var alertedKeys = new Set();
 var STORAGE_KEY = 'siborong_schedule_v1';
 var HISTORY_KEY = 'siborong_backup_history_v1';
@@ -56,36 +57,33 @@ function showRestoreModal() {
   } else {
     list.innerHTML = history.map(function(h, i) {
       var timeStr = new Date(h.savedAt).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
-      return '<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:0.75rem;display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:600">' + (h.label||'Backup') + ' - ' + h.count + ' rute</div><div style="font-size:0.75rem;color:var(--muted)">' + timeStr + '</div></div><button class="btn-primary" style="padding:0.35rem 0.75rem;font-size:0.8rem" onclick="restoreFromHistory(' + i + ')">Restore</button></div>';
+      return '<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:0.75rem;display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:600;font-size:0.9rem">' + (h.label || 'Backup') + '</div><div style="font-size:0.75rem;color:var(--muted)">' + timeStr + ' · ' + h.count + ' rute</div></div><button class="btn-primary" style="padding:0.4rem 0.8rem;font-size:0.8rem" onclick="restoreBackup(' + i + ')">Restore</button></div>';
     }).join('');
   }
-  document.getElementById('restoreModal').style.display = 'flex';
+  var modal = document.getElementById('restoreModal');
+  modal.style.display = 'flex';
 }
-function closeRestoreModal() { document.getElementById('restoreModal').style.display = 'none'; }
-function restoreFromHistory(index) {
+function closeRestoreModal() {
+  document.getElementById('restoreModal').style.display = 'none';
+}
+function restoreBackup(index) {
   var history = getHistory();
   if (!history[index]) return;
-  var item = history[index];
-  saveCurrentSchedule('Sebelum restore');
-  schedule = item.schedule;
+  schedule = history[index].schedule;
   alertedKeys.clear();
-  currentFilter = 'all';
-  document.querySelectorAll('.filters button').forEach(function(b) {
-    b.classList.toggle('btn-active', b.dataset.filter === 'all');
-  });
-  saveCurrentSchedule('Restore: ' + (item.label || 'Backup'));
+  saveCurrentSchedule('Restore: ' + (history[index].label || 'backup'));
   renderTable();
   closeRestoreModal();
-  addMsg('[OK] Restore berhasil (' + item.count + ' rute).');
+  addMsg('[OK] Jadwal di-restore (' + schedule.length + ' rute).');
   if (voiceEnabled) speak('Jadwal berhasil di-restore.');
 }
-function parseTime(str) {
-  var p = str.split(':').map(Number);
-  return p[0] * 60 + p[1];
+function parseTime(t) {
+  var p = String(t).split(':');
+  return parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
 }
 function nowMinutes() {
-  var wib = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
-  return wib.getHours() * 60 + wib.getMinutes();
+  var d = getNowDate();
+  return d.getHours() * 60 + d.getMinutes();
 }
 function getNowDate() {
   return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
@@ -123,11 +121,14 @@ function renderTable() {
       if (currentFilter === 'loading' && status.key !== 'loading') return;
       if (currentFilter === 'upcoming' && status.key !== 'upcoming' && status.key !== 'soon') return;
     }
+    if (searchQuery) {
+      if (item.route.toLowerCase().indexOf(searchQuery) === -1) return;
+    }
     var diff = parseTime(item.start) - nowMinutes();
     var rowClass = (status.key === 'loading' || status.key === 'soon') ? 'highlight-row' : '';
     rows.push('<tr class="' + rowClass + '"><td>' + (idx+1) + '</td><td class="route-name">' + item.route + '</td><td><span class="slot-badge">' + item.slot + '</span></td><td class="time-cell">' + item.start + '</td><td class="time-cell">' + item.etd + '</td><td><span class="status ' + status.cls + '">' + status.label + '</span></td><td class="countdown">' + formatCountdown(diff) + '</td></tr>');
   });
-  tbody.innerHTML = rows.join('') || '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted)">Tidak ada data</td></tr>';
+  tbody.innerHTML = rows.join('') || '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted)">' + (searchQuery ? 'Tidak ada rute cocok dengan "' + searchQuery + '"' : 'Tidak ada data') + '</td></tr>';
   document.getElementById('statUpcoming').textContent = upcoming;
   document.getElementById('statLoading').textContent = loading;
   document.getElementById('statDone').textContent = done;
