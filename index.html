@@ -39,6 +39,7 @@
       <button class="btn-success" onclick="document.getElementById('csvUpload').click()">Upload CSV</button>
       <button class="btn-ghost" onclick="downloadCSV()" title="Download jadwal saat ini">Download</button>
       <button class="btn-ghost" onclick="showRestoreModal()" title="Restore dari backup">Restore</button>
+      <button class="btn-ghost" id="btnNotif" onclick="requestNotifPermission()" title="Aktifkan notifikasi browser">Aktifkan Notif</button>
       <select class="theme-select" id="themeSelect" onchange="setTheme(this.value)" title="Ganti tema">
         <option value="dark">Gelap</option>
         <option value="light">Terang</option>
@@ -62,9 +63,13 @@
           <div class="stat-card stat-loading"><div class="num" id="statLoading">0</div><div class="label">Sedang Loading</div></div>
           <div class="stat-card stat-done"><div class="num" id="statDone">0</div><div class="label">Selesai</div></div>
         </div>
+        <div class="search-row">
+          <input type="text" id="searchRoute" class="search-input" placeholder="Cari rute / hub (contoh: Beringin, Saipar)..." oninput="setSearch(this.value)" />
+          <button class="btn-ghost" onclick="clearSearch()" title="Hapus pencarian">X</button>
+        </div>
         <div class="filters">
           <button class="btn-ghost btn-active" data-filter="all" onclick="setFilter('all')">Semua</button>
-          <button class="btn-ghost" data-filter="soon" onclick="setFilter('soon')"><=30 menit</button>
+          <button class="btn-ghost" data-filter="soon" onclick="setFilter('soon')">&lt;=30 menit</button>
           <button class="btn-ghost" data-filter="loading" onclick="setFilter('loading')">Loading</button>
           <button class="btn-ghost" data-filter="upcoming" onclick="setFilter('upcoming')">Akan Datang</button>
         </div>
@@ -103,7 +108,7 @@
     </div>
   </main>
   <footer>
-    SPX Siborong-Borong Dashboard V5 - PWA - Auto-save & Backup - Waktu zona WIB<br>
+    SPX Siborong-Borong Dashboard V5 - PWA - Auto-save &amp; Backup - Waktu zona WIB<br>
     Format CSV: Route, Slot, Start Loading, ETD Origin | <strong>Powered by Amos rcp'86</strong>
   </footer>
   <div id="restoreModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:300;align-items:center;justify-content:center;">
